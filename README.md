@@ -64,13 +64,13 @@ We designed a custom application-layer protocol using plain text over TCP:
 ## **6\. Academic Integrity & References**
 
 * **Code Origin:**
-- README.md was adapted from the format of the template repo provided in the assignment instructions.
-- The socket boilerplate and server structure was adapted from the course sample repo. 
-- The Connect Four game logic, protocol design, and threading model were written by the group.
+ - README.md was adapted from the format of the template repo provided in the assignment instructions.
+ - The socket boilerplate and server structure was adapted from the course sample repo. 
+ - The Connect Four game logic, protocol design, and threading model were written by the group.
  
 * **GenAI Usage:**  
-- Claude was used to help polish the `README.md`.
+ - Claude was used to help polish the `README.md`.
 * **References:** 
-- [Python Socket Documentation](https://docs.python.org/3/library/socket.html)
-- [Python Threading Documentation](https://docs.python.org/3/library/threading.html)
-- [Connect Four Rules](https://en.wikipedia.org/wiki/Connect_Four)
+ - [Python Socket Documentation](https://docs.python.org/3/library/socket.html)
+ - [Python Threading Documentation](https://docs.python.org/3/library/threading.html)
+ - [Connect Four Rules](https://en.wikipedia.org/wiki/Connect_Four)
