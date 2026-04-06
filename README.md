@@ -70,6 +70,8 @@ We designed a custom application-layer protocol using plain text over TCP:
  
 * **GenAI Usage:**  
   - Claude was used to help polish the `README.md`.
+  - Gemini was used to help develop the GUI.
+  
 * **References:** 
   - [Python Socket Documentation](https://docs.python.org/3/library/socket.html)
   - [Python Threading Documentation](https://docs.python.org/3/library/threading.html)

@@ -243,6 +243,9 @@ def handle_client(player_num, sock):
 
     print(f"[Server] Player {player_num} thread done")
     try:
+        # give the client time to process the WIN/LOSE message
+        # and activate the game over event
+        time.sleep(1)
         sock.close()
     except:
         pass
