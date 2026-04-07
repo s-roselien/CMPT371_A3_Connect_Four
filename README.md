@@ -41,7 +41,8 @@ To run this project, you need:
 
 - **Python 3.8** or higher
 - **tkinter** - comes built into Python, no installation needed
-- 3 terminal window (one for server, one per client)
+- **3 terminal windows** (one for server, one per client)
+- **Display** A graphical display envrionment is required
 - All commands run from inside the `src/` folder
 
 ## **5\. Installation**
@@ -52,9 +53,24 @@ To run this project, you need:
 git clone https://github.com/YOURUSERNAME/CMPT371_A3_Connect_Four.git
 cd CMPT371_A3_Connect_Four
 ```
-**Step 2 - No dependencies to install!**
 
-tkinter is included with Python 3 by default. Non `pip install` needed.
+- **Note on the following commands**: Depending on your system configuration, use `python3` or `python`. If one command is not recognized, please try the other.
+
+**Step 2 - No dependencies to install, possible troubleshooting**
+
+- tkinter is included with Python 3 by default. No `pip install` needed. However, in specific cases it is possible the Tk component was not included during the installation of Python.
+- If you run into any issues, to check if tkinter is present, run:
+```bash 
+python3 -m tkinter
+```
+This should open a window with a simple Tk interface. If it does not, then on Windows/macOS that means when python was installed it did not include all the default modules, and you will need to reinstall (and ensure tk and IDLE are checked in the installer). On Linux, you can run:
+```bash 
+sudo apt update
+sudo apt-get install python3-tk
+```
+If you are still having issues you can refer to the following sources for help:
+[For Windows, PIP, or conda users](https://www.geeksforgeeks.org/python/how-to-install-tkinter-in-windows/)
+[For Linux users](https://www.pythonguis.com/installation/install-tkinter-linux/)
 
 ## **6\. Step-by-Step Run Guide**
 
@@ -73,11 +89,11 @@ python3 server.py
 Expected output:
 
 ```
-[Server] Listening on 127.0.0.1:5555, waiting for two players...
+[Server] Listening on 127.0.0.1:5555, waiting for 2 players...
 ```
 **Step 3 - Connect Player 1:**
 
-Open a second terminal, navigate to `src/`, and run:
+Open a second terminal, make sure you are still in the `src/` folder, and run:
 
 ```bash
 python3 client.py
@@ -87,7 +103,7 @@ A GUI window opens showing "Connected! Waiting for Player 2..."
 
 **Step 4 - Connect Player 2:**
 
-Open a third terminal, navigate to `src/`, and run:
+Open a third terminal, again confirm you are still in the `src/` folder, and run:
 
 ```bash
 python3 client.py
@@ -98,7 +114,7 @@ Both GUI windows update and the game begins immediately.
 **Step 5 - Gameplay:**
 
 1. The status bar at the top shows whose turn it is
-1. When it is your turn, click any **Drop** buttom at the bottom to drop your piece into that column
+1. When it is your turn, click any **Drop** button at the bottom to drop your piece into that column
 1. The board updates on both screens after every move
 1. When the game ends, a message appears on the board showing WIN, LOST, DRAW, or OPPONENT LEFT
 1. Close the window to exit
