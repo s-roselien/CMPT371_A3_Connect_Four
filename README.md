@@ -13,13 +13,22 @@
 
 ## **1\. Project Overview & Description**
 
-This project is a two-player **Connect Four** game built using Python's Socket API over **TCP**. Two clients connect to a central server and play against each other in real time. The server handles all game logic, board state, move validation, and win/draw detection, ensuring clients cannot cheat by modifying their local state.
+This project is a two-player **Connect Four** game built using Python's Socket API over **TCP**. Two clients connect to a central server and play against each other in real time through a **graphical user interface (GUI)** built with Tkinter.
 
-Each player sees a colourful terminal interface showing the board, whose turn it is, and the result of the game. Player 1 is represented by 🔴 in red and Player 2 by 🟡 in yellow.
+The server handles all game logic, board state, move validation, and win/draw detection, ensuring clients cannot cheat by modifying their local state. Each player sees a blue game board with red and yellow circles. Players clikc buttons to drop their piece into a column. The first player to connect 4 in a row (horizontally, vertically, or diagonally) wins.
+- **Player 1** = 🔴 
+- **Player 2** = 🟡 
 
 ## **2\. System Limitations & Edge Cases**
 
-Add here
+As required by the project specifications, we have identified and handled (or defined) the following limitations and potential issues within our application scope:
+
+- **Exactly 2 players required:** the server waits for excatly 2 clients. No more or less.
+- **No reconnection:** If a player disconnects mid-game, the game ends and other player sees "OPPONENT LEFT" on their screen.
+- **One game per server run:** Restart the server to play again.
+- **LAN/localhost only:** The server binds to localhost by default. For play over a network, change `HOST` in both `server.py` and `client.py` to the server machine's local IP address.
+- **Tkinter thread safety:** Tkinter is not thread safe. All UI updates are scheduled on the main thread using `root.after()` to avoid crashes.
+- **TCP stream buffering:** TCP is a continuous byte stream so multiple messages can arrive together. We handle this by appending `\n` to all messages and splitting on it to process them one at a time.
 
 ## **3\. Video Demo**
 
@@ -31,19 +40,95 @@ Our 2-minute video demonstration covering connection establishment, data exchang
 To run this project, you need:
 
 - **Python 3.8** or higher
+- **tkinter** - comes built into Python, no installation needed
 - 3 terminal window (one for server, one per client)
-- All the files in the same folder
+- All commands run from inside the `src/` folder
 
-## **4\. Step-by-Step Run Guide**
+## **5\. Installation**
 
-Add here
+**Step 1 - Clone the repo:**
 
-## **5\. Technical Protocol Details**
+```bash
+git clone https://github.com/YOURUSERNAME/CMPT371_A3_Connect_Four.git
+cd CMPT371_A3_Connect_Four
+```
+**Step 2 - No dependencies to install!**
+
+tkinter is included with Python 3 by default. Non `pip install` needed.
+
+## **6\. Step-by-Step Run Guide**
+
+**Step 1 - Navigate to the src folder:**
+
+```bash 
+cd src
+```
+
+**Step 2 - Start the server:**
+
+```bash 
+python3 server.py
+```
+
+Expected output:
+
+```
+[Server] Listening on 127.0.0.1:5555, waiting for two players...
+```
+**Step 3 - Connect Player 1:**
+
+Open a second terminal, navigate to `src/`, and run:
+
+```bash
+python3 client.py
+```
+
+A GUI window opens showing "Connected! Waiting for Player 2..."
+
+**Step 4 - Connect Player 2:**
+
+Open a third terminal, navigate to `src/`, and run:
+
+```bash
+python3 client.py
+```
+
+Both GUI windows update and the game begins immediately.
+
+**Step 5 - Gameplay:**
+
+1. The status bar at the top shows whose turn it is
+1. When it is your turn, click any **Drop** buttom at the bottom to drop your piece into that column
+1. The board updates on both screens after every move
+1. When the game ends, a message appears on the board showing WIN, LOST, DRAW, or OPPONENT LEFT
+1. Close the window to exit
+
+## **7. Playing on Different Machines (same network)**
+
+Find the server machine’s local IP:
+
+```bash
+# macOS / Linux
+hostname -I
+
+# Windows
+ipconfig
+```
+
+Change `HOST` in both `server.py` and `client.py` to that IP:
+
+```python
+HOST = '192.168.X.X'
+```
+
+Then run as normal — the GUI client will connect to the server over the network.
+
+## **8\. Technical Protocol Details**
 
 We designed a custom application-layer protocol using plain text over TCP:
 
 - **Message format:** `TYPE|payload\n`
-- **Delimiter:** `\n` (newline) is appended to every message to handle TCP stream buffering
+- **Delimiter:** `\n` appends to every message to handle TCP stream buffering
 
 | Message | Direction | Meaning |
 |---------|-----------|---------|
@@ -58,10 +143,9 @@ We designed a custom application-layer protocol using plain text over TCP:
 | `ERROR\|<msg>` | S → C | Invalid move, try again |
 | `OPPONENT_LEFT` | S → C | Opponent disconnected |
 | `MOVE\|<col>` | C → S | Drop piece in this column (0-indexed) |
-| `QUIT` | C → S | Player is leaving |
 
 
-## **6\. Academic Integrity & References**
+## **9\. Academic Integrity & References**
 
 * **Code Origin:**
   - README.md was adapted from the format of the template repo provided in the assignment instructions.
@@ -70,7 +154,7 @@ We designed a custom application-layer protocol using plain text over TCP:
  
 * **GenAI Usage:**  
   - Claude was used to help polish the `README.md`.
-  - Gemini was used to help develop the GUI.
+  - Gemini was used to help develop the GUI in `client.py`.
   
 * **References:** 
   - [Python Socket Documentation](https://docs.python.org/3/library/socket.html)
