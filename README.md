@@ -33,7 +33,7 @@ As required by the project specifications, we have identified and handled (or de
 ## **3\. Video Demo**
 
 Our 2-minute video demonstration covering connection establishment, data exchange, real-time gameplay, and process termination can be viewed below:  
-**▶️ Watch Project Demo on YouTube**
+[Watch Project Demo on YouTube](https://youtu.be/wwwYe6YmHxg)
 
 ## **4\. Prerequisites (Fresh Environment)**
 
