@@ -23,7 +23,7 @@ The server handles all game logic, board state, move validation, and win/draw de
 
 As required by the project specifications, we have identified and handled (or defined) the following limitations and potential issues within our application scope:
 
-- **Exactly 2 players required:** the server waits for excatly 2 clients. No more or less.
+- **Exactly 2 players required:** the server waits for exactly 2 clients. No more or less.
 - **No reconnection:** If a player disconnects mid-game, the game ends and other player sees "OPPONENT LEFT" on their screen.
 - **One game per server run:** Restart the server to play again.
 - **LAN/localhost only:** The server binds to localhost by default. For play over a network, change `HOST` in both `server.py` and `client.py` to the server machine's local IP address.
@@ -51,6 +51,9 @@ To run this project, you need:
 
 ```bash
 git clone https://github.com/YOURUSERNAME/CMPT371_A3_Connect_Four.git
+```
+
+```bash
 cd CMPT371_A3_Connect_Four
 ```
 
@@ -70,7 +73,7 @@ sudo apt-get install python3-tk
 ```
 If you are still having issues you can refer to the following sources for help:
 [For Windows, PIP, or conda users](https://www.geeksforgeeks.org/python/how-to-install-tkinter-in-windows/)
-[For Linux users](https://www.pythonguis.com/installation/install-tkinter-linux/)
+ | [For Linux users](https://www.pythonguis.com/installation/install-tkinter-linux/)
 
 ## **6\. Step-by-Step Run Guide**
 
