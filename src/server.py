@@ -11,30 +11,34 @@ HOST = '127.0.0.1'
 PORT = 5555
 
 # Message types
+# All messages are plain text strings ending with \n
 DELIMITER = "\n"
 SEP = "|"
 
-MSG_WAIT = "WAIT"
-MSG_START = "START"
-MSG_BOARD = "BOARD"
-MSG_YOUR_TURN = "YOUR_TURN"
-MSG_OPPONENT_TURN = "OPPONENT_TURN"
-MSG_WIN = "WIN"
-MSG_LOSE = "LOSE"
-MSG_DRAW = "DRAW"
-MSG_ERROR = "ERROR"
-MSG_OPPONENT_LEFT = "OPPONENT_LEFT"
+# Messages the server sends to clients
+MSG_WAIT = "WAIT" # tell player 1 to wait for player 2
+MSG_START = "START" # game is starting, tells client their player number
+MSG_BOARD = "BOARD"  # sends the current board state 
+MSG_YOUR_TURN = "YOUR_TURN" # it is this player's turn to move
+MSG_OPPONENT_TURN = "OPPONENT_TURN" # the other player is moving, wait
+MSG_WIN = "WIN"  # this player won
+MSG_LOSE = "LOSE" # this player lost
+MSG_DRAW = "DRAW"  # board is full, no winner
+MSG_ERROR = "ERROR" # invalid move, includes reason why
+MSG_OPPONENT_LEFT = "OPPONENT_LEFT" # other player disconnected or quit
+
+# Messages the server receives from clients
 MSG_MOVE = "MOVE"
 MSG_QUIT = "QUIT"
 
 #Board constants
-
 ROWS = 6
 COLS = 7
 EMPTY = 0
 PLAYER_1 = 1
 PLAYER_2 = 2
 
+# Build a message string and encode it to bytes ready to send over the socket.
 def encode(msg_type, payload=None):
     if payload is not None:
         msg = f"{msg_type}{SEP}{payload}{DELIMITER}"
@@ -42,6 +46,7 @@ def encode(msg_type, payload=None):
         msg = f"{msg_type}{DELIMITER}"
     return msg.encode("utf-8")
 
+# Split a received message string into its type and payload
 def decode(raw):
     if SEP in raw:
         parts = raw.split(SEP, 1)
@@ -59,7 +64,8 @@ def create_board():
         board.append(row)
     return board
 
-# Check if column in range and not full
+# Check if column in range and not already full
+# Check if a piece can be dropped into this column
 def is_valid_move(board, col):
     if col < 0 or col >= COLS:
         return False
@@ -67,7 +73,7 @@ def is_valid_move(board, col):
         return True
     return False
 
-# The piece falls to lowest empty row
+# Drop the piece into the column, which falls due to gravity
 def drop_piece(board, col, player):
     for row in range(ROWS -1, -1, -1):
         if board[row][col] == EMPTY:
@@ -105,9 +111,9 @@ def check_winner(board, player):
                board[r+2][c-2] == player and board[r+3][c-3] == player:
                 return True
 
-    return False
+    return False # no winner found
 
-# No moves possible if the top row if all full
+# The board is full when the entire top row is occupied
 def is_draw(board):
     for c in range(COLS):
         if board[0][c] == EMPTY:
@@ -123,6 +129,7 @@ def serialize_board(board):
     return ",".join(flat)
 
 # Shared game state
+# These variables are shared between both player threads so they need protection
 board = create_board()
 current_player = PLAYER_1
 board_lock = threading.Lock() # stops both threads editing board at same time
@@ -137,45 +144,57 @@ def safe_send(sock, msg_type, payload=None):
     except:
         pass
 
-# Broadcasting same message to both the players
+# Broadcasting same message to both the connected players at the same time
 def send_to_both(msg_type, payload=None):
     for s in player_socket.values():
         safe_send(s, msg_type, payload)
 
 def recv_msg(sock):
     """
-    Read one complete new-line terminated message from socket
-    TCP is a stream so we keep reading until we get a \n
+    Read one complete message from socket
+    TCP is a stream protocol - data arrives in chunks and not complete messages
     """
     data = b""
     while True:
         try:
             chunk = sock.recv(1024)
         except:
-            return None
+            return None # socket error
         if not chunk:
-            return None
+            return None # connection closed
         data += chunk
         if DELIMITER.encode() in data:
             line, _ =data.split(DELIMITER.encode(), 1)
             return line.decode("utf-8")
         
 def handle_client(player_num, sock):
-    # Manage the game loop for one player
+    """
+    This function runs in its own thread for each player
+    Manages the entire game loop for one player
+    - tells the client which player they are
+    - signals whose turn it is
+    - receives and validates moves
+    - check for win/draw after each move
+    """
     global current_player, board
+
+    # Figure out who the opponent is 
     if player_num == PLAYER_1:
         opponent = PLAYER_2     
     else:
         opponent = PLAYER_1
 
+    # Tells client which player number they are
     safe_send(sock, MSG_START, str(player_num))
     print(f"[Server] Player {player_num} is ready")
 
-    # Send intital empty board
+    # Send initial empty board
     with board_lock:
         safe_send(sock, MSG_BOARD, serialize_board(board))
     
     while not game_over_event.is_set():
+
+        # Check if it is this player's turn
         with board_lock:
             my_turn = (current_player == player_num)
 
@@ -185,6 +204,7 @@ def handle_client(player_num, sock):
             # Wait for the given player to send a move
             raw = recv_msg(sock)
             if raw is None:
+                # Player disconnected unexpectedly
                 print(f"[Server] Player {player_num} disconnected")
                 game_over_event.set()
                 safe_send(player_socket[opponent], MSG_OPPONENT_LEFT)
@@ -192,6 +212,7 @@ def handle_client(player_num, sock):
 
             msg_type, payload = decode(raw)
 
+            # Player chose to quit voluntarily
             if msg_type == MSG_QUIT:
                 print(f"[Server] Player {player_num} quit")
                 game_over_event.set()
@@ -208,14 +229,19 @@ def handle_client(player_num, sock):
                 safe_send(sock, MSG_ERROR, "column must be a number")
                 continue
 
+            # validate and apply the move inside the lock so both threads don't conflict
             with board_lock:
                 if not is_valid_move(board, col):
                     safe_send(sock, MSG_ERROR, f"column {col+1} is full or invalid, pick another")
                     continue
-
+                
+                # Apply the move, the piece drops to lowest empty row
                 drop_piece(board, col, player_num)
+
+                # Sends the updated board to both players 
                 send_to_both(MSG_BOARD, serialize_board(board))
 
+                # Check if this move won the game
                 if check_winner(board, player_num):
                     safe_send(sock, MSG_WIN)
                     safe_send(player_socket[opponent], MSG_LOSE)
@@ -223,12 +249,14 @@ def handle_client(player_num, sock):
                     game_over_event.set()
                     break
 
+                # Check if the board is completely full with no winner
                 if is_draw(board):
                     send_to_both(MSG_DRAW)
                     print("[Server] Draw!")
                     game_over_event.set()
                     break
 
+                # Swap turn to the other player
                 current_player = opponent
 
         else:
@@ -239,7 +267,7 @@ def handle_client(player_num, sock):
                 with board_lock:
                     if current_player == player_num:
                         break
-                threading.Event().wait(0.1)
+                time.sleep(0.1)
 
     print(f"[Server] Player {player_num} thread done")
     try:
@@ -252,12 +280,16 @@ def handle_client(player_num, sock):
 
 def start_server():
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    
+    # SO_REUSEADDR allows us to restart the server quickly without "address already in use" errors
     server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
     server_sock.bind((HOST, PORT))
     server_sock.listen()
     print(f"[Server] Listening on {HOST}:{PORT}, waiting for 2 players...")
 
     try:
+        # Wait until exactly 2 players have connected
         connected = 0
         while connected < 2:
             client_sock, addr = server_sock.accept()
@@ -265,6 +297,7 @@ def start_server():
             player_socket[connected] = client_sock
             print(f"[Server] Player {connected} connected from {addr}")
 
+            # Tell player 1 to wait while we wait for player 2 
             if connected == 1:
                 safe_send(client_sock, MSG_WAIT)
 
@@ -277,6 +310,7 @@ def start_server():
             t.start()
             threads.append(t)
 
+        # Wait for both the threads to finish before closing the server
         for t in threads:
             t.join()
 
